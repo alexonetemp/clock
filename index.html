@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';">
   <title>7-Segment Clock</title>
   <style>
     * {
@@ -62,7 +62,6 @@
     .colon-dot {
       width: 4vw;
       height: 4vw;
-      background: #ff0000;
       border-radius: 50%;
       transition: opacity 0.3s;
     }
@@ -78,7 +77,6 @@
 
     .segment {
       position: absolute;
-      background: #ff0000;
       transition: opacity 0.3s;
     }
 
@@ -100,6 +98,75 @@
     .seg-e { top: 21vw; left: 0; }
     .seg-f { top: 3vw; left: 0; }
     .seg-g { top: 17.5vw; }
+
+    /* Color themes */
+    .color-red .segment,
+    .color-red .colon-dot { background: #ff0000; }
+    
+    .color-green .segment,
+    .color-green .colon-dot { background: #00ff00; }
+    
+    .color-blue .segment,
+    .color-blue .colon-dot { background: #0099ff; }
+    
+    .color-amber .segment,
+    .color-amber .colon-dot { background: #ffaa00; }
+    
+    .color-white .segment,
+    .color-white .colon-dot { background: #ffffff; }
+    
+    .color-magenta .segment,
+    .color-magenta .colon-dot { background: #ff00ff; }
+
+    /* Brightness levels - 20 to 100 in steps */
+    .brightness-20 .segment.on { opacity: 0.20; }
+    .brightness-20 .segment:not(.on) { opacity: 0.02; }
+    .brightness-20 .colon-dot { opacity: 0.20; }
+
+    .brightness-30 .segment.on { opacity: 0.30; }
+    .brightness-30 .segment:not(.on) { opacity: 0.03; }
+    .brightness-30 .colon-dot { opacity: 0.30; }
+
+    .brightness-40 .segment.on { opacity: 0.40; }
+    .brightness-40 .segment:not(.on) { opacity: 0.04; }
+    .brightness-40 .colon-dot { opacity: 0.40; }
+
+    .brightness-50 .segment.on { opacity: 0.50; }
+    .brightness-50 .segment:not(.on) { opacity: 0.05; }
+    .brightness-50 .colon-dot { opacity: 0.50; }
+
+    .brightness-60 .segment.on { opacity: 0.60; }
+    .brightness-60 .segment:not(.on) { opacity: 0.06; }
+    .brightness-60 .colon-dot { opacity: 0.60; }
+
+    .brightness-70 .segment.on { opacity: 0.70; }
+    .brightness-70 .segment:not(.on) { opacity: 0.07; }
+    .brightness-70 .colon-dot { opacity: 0.70; }
+
+    .brightness-80 .segment.on { opacity: 0.80; }
+    .brightness-80 .segment:not(.on) { opacity: 0.08; }
+    .brightness-80 .colon-dot { opacity: 0.80; }
+
+    .brightness-90 .segment.on { opacity: 0.90; }
+    .brightness-90 .segment:not(.on) { opacity: 0.09; }
+    .brightness-90 .colon-dot { opacity: 0.90; }
+
+    .brightness-100 .segment.on { opacity: 1.00; }
+    .brightness-100 .segment:not(.on) { opacity: 0.10; }
+    .brightness-100 .colon-dot { opacity: 1.00; }
+
+    /* Margin classes */
+    .margin-0 { margin: 0; }
+    .margin-5 { margin: 5px; }
+    .margin-10 { margin: 10px; }
+    .margin-15 { margin: 15px; }
+    .margin-20 { margin: 20px; }
+    .margin-25 { margin: 25px; }
+    .margin-30 { margin: 30px; }
+    .margin-35 { margin: 35px; }
+    .margin-40 { margin: 40px; }
+    .margin-45 { margin: 45px; }
+    .margin-50 { margin: 50px; }
 
     #message {
       position: fixed;
@@ -166,6 +233,13 @@
       border-color: #fff;
     }
 
+    .color-btn.red { background: #ff0000; }
+    .color-btn.green { background: #00ff00; }
+    .color-btn.blue { background: #0099ff; }
+    .color-btn.amber { background: #ffaa00; }
+    .color-btn.white { background: #ffffff; }
+    .color-btn.magenta { background: #ff00ff; }
+
     input[type="range"] {
       width: 100%;
       height: 6px;
@@ -208,12 +282,12 @@
   <div id="overlay"></div>
   
   <div id="clock-container">
-    <div id="clock">
+    <div id="clock" class="color-red brightness-100 margin-0">
       <div class="digit" data-digit="0"></div>
       <div class="digit" data-digit="1"></div>
-      <div class="colon">
-        <div class="colon-dot on"></div>
-        <div class="colon-dot on"></div>
+      <div class="colon blink">
+        <div class="colon-dot"></div>
+        <div class="colon-dot"></div>
       </div>
       <div class="digit" data-digit="2"></div>
       <div class="digit" data-digit="3"></div>
@@ -224,23 +298,23 @@
     <div class="setting-group">
       <label>Color</label>
       <div class="color-picker">
-        <div class="color-btn active" data-color="#ff0000" style="background: #ff0000;"></div>
-        <div class="color-btn" data-color="#00ff00" style="background: #00ff00;"></div>
-        <div class="color-btn" data-color="#0099ff" style="background: #0099ff;"></div>
-        <div class="color-btn" data-color="#ffaa00" style="background: #ffaa00;"></div>
-        <div class="color-btn" data-color="#ffffff" style="background: #ffffff;"></div>
-        <div class="color-btn" data-color="#ff00ff" style="background: #ff00ff;"></div>
+        <div class="color-btn red active" data-color="red"></div>
+        <div class="color-btn green" data-color="green"></div>
+        <div class="color-btn blue" data-color="blue"></div>
+        <div class="color-btn amber" data-color="amber"></div>
+        <div class="color-btn white" data-color="white"></div>
+        <div class="color-btn magenta" data-color="magenta"></div>
       </div>
     </div>
 
     <div class="setting-group">
       <label>Brightness</label>
-      <input type="range" id="brightness" min="20" max="100" value="100">
+      <input type="range" id="brightness" min="20" max="100" step="10" value="100">
     </div>
 
     <div class="setting-group">
       <label>Clock Padding (0-50px)</label>
-      <input type="range" id="padding" min="0" max="50" value="0">
+      <input type="range" id="padding" min="0" max="50" step="5" value="0">
     </div>
 
     <div class="setting-group">
@@ -272,10 +346,9 @@
       9: ['a','b','c','d','f','g']
     };
 
-    let currentColor = '#ff0000';
-    let currentBrightness = 100;
     let wakeLock = null;
     let wakeLockSupported = false;
+    const clockEl = document.getElementById('clock');
 
     // Initialize digits
     function initDigits() {
@@ -292,14 +365,9 @@
     // Update digit display
     function updateDigit(digitEl, num) {
       const activeSegs = segmentMap[num];
-      const onOpacity = currentBrightness / 100;
-      const offOpacity = (currentBrightness / 100) * 0.1;
-      
       digitEl.querySelectorAll('.segment').forEach(seg => {
         const segName = seg.classList[1].split('-')[1];
-        const isOn = activeSegs.includes(segName);
-        seg.classList.toggle('on', isOn);
-        seg.style.opacity = isOn ? onOpacity : offOpacity;
+        seg.classList.toggle('on', activeSegs.includes(segName));
       });
     }
 
@@ -317,24 +385,17 @@
 
     // Apply color
     function applyColor(color) {
-      currentColor = color;
-      document.querySelectorAll('.segment, .colon-dot').forEach(el => {
-        el.style.background = color;
-      });
+      clockEl.className = clockEl.className.replace(/color-\w+/, `color-${color}`);
     }
 
     // Apply brightness
     function applyBrightness(value) {
-      currentBrightness = value;
-      const onOpacity = value / 100;
-      const offOpacity = (value / 100) * 0.1;
-      
-      document.querySelectorAll('.segment').forEach(el => {
-        el.style.opacity = el.classList.contains('on') ? onOpacity : offOpacity;
-      });
-      document.querySelectorAll('.colon-dot').forEach(el => {
-        el.style.opacity = onOpacity;
-      });
+      clockEl.className = clockEl.className.replace(/brightness-\d+/, `brightness-${value}`);
+    }
+
+    // Apply margin
+    function applyMargin(value) {
+      clockEl.className = clockEl.className.replace(/margin-\d+/, `margin-${value}`);
     }
 
     // Show message
@@ -405,8 +466,7 @@
 
     // Padding
     document.getElementById('padding').addEventListener('input', (e) => {
-      const clock = document.getElementById('clock');
-      clock.style.margin = `${e.target.value}px`;
+      applyMargin(e.target.value);
     });
 
     // Show colon
@@ -435,8 +495,6 @@
     updateClock();
     setInterval(updateClock, 1000);
     initWakeLock();
-    // Start with blink enabled
-    document.querySelector('.colon').classList.add('blink');
   </script>
 </body>
 </html>
