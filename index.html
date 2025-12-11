@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval';">
+  <title>7-Segment Clock</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    #clock-container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+
+    #clock {
+      display: flex;
+      gap: 2vw;
+    }
+
+    .digit {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3vw;
+      position: relative;
+      width: 20vw;
+      height: 38vw;
+    }
+
+    .colon {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: center;
+      padding: 6vw 0;
+      transition: opacity 0.3s;
+    }
+
+    .colon.hidden {
+      opacity: 0;
+    }
+
+    .colon-dot {
+      width: 4vw;
+      height: 4vw;
+      background: #ff0000;
+      border-radius: 50%;
+      transition: opacity 0.3s;
+    }
+
+    .colon.blink .colon-dot {
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.1; }
+    }
+
+    .segment {
+      position: absolute;
+      background: #ff0000;
+      transition: opacity 0.3s;
+    }
+
+    .segment.h {
+      width: 100%;
+      height: 2.5vw;
+      left: 0;
+    }
+
+    .segment.v {
+      width: 2.5vw;
+      height: 17vw;
+    }
+
+    .seg-a { top: 0; }
+    .seg-b { top: 3vw; right: 0; }
+    .seg-c { top: 21vw; right: 0; }
+    .seg-d { bottom: 0; }
+    .seg-e { top: 21vw; left: 0; }
+    .seg-f { top: 3vw; left: 0; }
+    .seg-g { top: 17.5vw; }
+
+    #message {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      padding: 15px 25px;
+      border-radius: 8px;
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    #message.show {
+      opacity: 1;
+    }
+
+    #settings {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(20, 20, 20, 0.95);
+      color: #fff;
+      padding: 20px;
+      transform: translateY(100%);
+      transition: transform 0.3s;
+      z-index: 999;
+    }
+
+    #settings.show {
+      transform: translateY(0);
+    }
+
+    .setting-group {
+      margin-bottom: 20px;
+    }
+
+    .setting-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .color-picker {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .color-btn {
+      width: 40px;
+      height: 40px;
+      border: 2px solid transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .color-btn.active {
+      border-color: #fff;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      background: #444;
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    input[type="checkbox"]:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 998;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="message"></div>
+  <div id="overlay"></div>
+  
+  <div id="clock-container">
+    <div id="clock">
+      <div class="digit" data-digit="0"></div>
+      <div class="digit" data-digit="1"></div>
+      <div class="colon">
+        <div class="colon-dot on"></div>
+        <div class="colon-dot on"></div>
+      </div>
+      <div class="digit" data-digit="2"></div>
+      <div class="digit" data-digit="3"></div>
+    </div>
+  </div>
+
+  <div id="settings">
+    <div class="setting-group">
+      <label>Color</label>
+      <div class="color-picker">
+        <div class="color-btn active" data-color="#ff0000" style="background: #ff0000;"></div>
+        <div class="color-btn" data-color="#00ff00" style="background: #00ff00;"></div>
+        <div class="color-btn" data-color="#0099ff" style="background: #0099ff;"></div>
+        <div class="color-btn" data-color="#ffaa00" style="background: #ffaa00;"></div>
+        <div class="color-btn" data-color="#ffffff" style="background: #ffffff;"></div>
+        <div class="color-btn" data-color="#ff00ff" style="background: #ff00ff;"></div>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <label>Brightness</label>
+      <input type="range" id="brightness" min="20" max="100" value="100">
+    </div>
+
+    <div class="setting-group">
+      <label>Clock Padding (0-50px)</label>
+      <input type="range" id="padding" min="0" max="50" value="0">
+    </div>
+
+    <div class="setting-group">
+      <label class="checkbox-label">
+        <input type="checkbox" id="showColon" checked>
+        <span>Blink colon</span>
+      </label>
+    </div>
+
+    <div class="setting-group">
+      <label class="checkbox-label">
+        <input type="checkbox" id="wakeLock" checked>
+        <span id="wakeLockLabel">Keep screen on</span>
+      </label>
+    </div>
+  </div>
+
+  <script>
+    const segmentMap = {
+      0: ['a','b','c','d','e','f'],
+      1: ['b','c'],
+      2: ['a','b','d','e','g'],
+      3: ['a','b','c','d','g'],
+      4: ['b','c','f','g'],
+      5: ['a','c','d','f','g'],
+      6: ['a','c','d','e','f','g'],
+      7: ['a','b','c'],
+      8: ['a','b','c','d','e','f','g'],
+      9: ['a','b','c','d','f','g']
+    };
+
+    let currentColor = '#ff0000';
+    let currentBrightness = 100;
+    let wakeLock = null;
+    let wakeLockSupported = false;
+
+    // Initialize digits
+    function initDigits() {
+      document.querySelectorAll('.digit').forEach(digitEl => {
+        const segments = ['a','b','c','d','e','f','g'];
+        segments.forEach(seg => {
+          const segEl = document.createElement('div');
+          segEl.className = `segment seg-${seg} ${seg === 'a' || seg === 'd' || seg === 'g' ? 'h' : 'v'}`;
+          digitEl.appendChild(segEl);
+        });
+      });
+    }
+
+    // Update digit display
+    function updateDigit(digitEl, num) {
+      const activeSegs = segmentMap[num];
+      const onOpacity = currentBrightness / 100;
+      const offOpacity = (currentBrightness / 100) * 0.1;
+      
+      digitEl.querySelectorAll('.segment').forEach(seg => {
+        const segName = seg.classList[1].split('-')[1];
+        const isOn = activeSegs.includes(segName);
+        seg.classList.toggle('on', isOn);
+        seg.style.opacity = isOn ? onOpacity : offOpacity;
+      });
+    }
+
+    // Update clock
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const time = hours + minutes;
+
+      document.querySelectorAll('.digit').forEach((digitEl, i) => {
+        updateDigit(digitEl, parseInt(time[i]));
+      });
+    }
+
+    // Apply color
+    function applyColor(color) {
+      currentColor = color;
+      document.querySelectorAll('.segment, .colon-dot').forEach(el => {
+        el.style.background = color;
+      });
+    }
+
+    // Apply brightness
+    function applyBrightness(value) {
+      currentBrightness = value;
+      const onOpacity = value / 100;
+      const offOpacity = (value / 100) * 0.1;
+      
+      document.querySelectorAll('.segment').forEach(el => {
+        el.style.opacity = el.classList.contains('on') ? onOpacity : offOpacity;
+      });
+      document.querySelectorAll('.colon-dot').forEach(el => {
+        el.style.opacity = onOpacity;
+      });
+    }
+
+    // Show message
+    function showMessage(text, duration = 3500) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.classList.add('show');
+      setTimeout(() => msg.classList.remove('show'), duration);
+    }
+
+    // Wake Lock
+    async function requestWakeLock() {
+      if (!wakeLockSupported) return;
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => {
+          console.log('Wake Lock released');
+        });
+      } catch (err) {
+        console.error('Wake Lock error:', err);
+      }
+    }
+
+    function releaseWakeLock() {
+      if (wakeLock) {
+        wakeLock.release();
+        wakeLock = null;
+      }
+    }
+
+    // Check Wake Lock support
+    async function initWakeLock() {
+      wakeLockSupported = 'wakeLock' in navigator;
+      const checkbox = document.getElementById('wakeLock');
+      const label = document.getElementById('wakeLockLabel');
+
+      if (wakeLockSupported) {
+        showMessage('Screen Wake Lock enabled ✓');
+        await requestWakeLock();
+      } else {
+        showMessage('Screen Wake Lock not supported on this device');
+        checkbox.checked = false;
+        checkbox.disabled = true;
+        label.textContent = 'Keep screen on (not supported)';
+      }
+    }
+
+    // Settings toggle
+    let settingsOpen = false;
+    document.getElementById('overlay').addEventListener('click', () => {
+      settingsOpen = !settingsOpen;
+      document.getElementById('settings').classList.toggle('show', settingsOpen);
+    });
+
+    // Color picker
+    document.querySelectorAll('.color-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyColor(btn.dataset.color);
+      });
+    });
+
+    // Brightness
+    document.getElementById('brightness').addEventListener('input', (e) => {
+      applyBrightness(e.target.value);
+    });
+
+    // Padding
+    document.getElementById('padding').addEventListener('input', (e) => {
+      const clock = document.getElementById('clock');
+      clock.style.margin = `${e.target.value}px`;
+    });
+
+    // Show colon
+    document.getElementById('showColon').addEventListener('change', (e) => {
+      document.querySelector('.colon').classList.toggle('blink', e.target.checked);
+    });
+
+    // Wake Lock checkbox
+    document.getElementById('wakeLock').addEventListener('change', async (e) => {
+      if (e.target.checked) {
+        await requestWakeLock();
+      } else {
+        releaseWakeLock();
+      }
+    });
+
+    // Re-acquire wake lock on visibility change
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState === 'visible' && wakeLockSupported && document.getElementById('wakeLock').checked) {
+        await requestWakeLock();
+      }
+    });
+
+    // Initialize
+    initDigits();
+    updateClock();
+    setInterval(updateClock, 1000);
+    initWakeLock();
+    // Start with blink enabled
+    document.querySelector('.colon').classList.add('blink');
+  </script>
+</body>
+</html>
